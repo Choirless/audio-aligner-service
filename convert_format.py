@@ -51,18 +51,13 @@ def main(params):
     # Create a temp dir for our files to use
     with tempfile.TemporaryDirectory() as tmpdir:
     
-        cos_object = cos.get_object(
-            Bucket=src_bucket,
-            Key=part_id)
-            
-        # write out files to temp dir
+        # download file to temp dir
         file_path = Path(tmpdir, part_id)
-        with open(file_path, "wb") as fp:
-            fp.write(cos_object['Body'].read())
-
         new_path = file_path.with_name("converted-" + file_path.name).with_suffix(".mp4")
-            
-        stream = ffmpeg.input(file_path)
+
+        cos.download_file(src_bucket, part_id, str(file_path))
+        
+        stream = ffmpeg.input(str(file_path))
         audio = stream.audio.filter('aresample', 44100)
         video = stream.video.filter('fps', fps=25, round='up')
         out = ffmpeg.output(audio, video, str(new_path))
