@@ -63,8 +63,11 @@ def main(params):
         out = ffmpeg.output(audio, video, str(new_path))
         stdout, stderr = out.run()
 
-        data = open(new_path, "rb").read()
+        cos.upload_file(str(new_path), dst_bucket, str(new_path.name))
 
-        return {"len": len(data)}
+        return {"src_bucket": src_bucket,
+                "dst_bucket": dst_bucket,
+                "src_key": part_id,
+                "dst_key": str(new_path.name)}
                 
             
