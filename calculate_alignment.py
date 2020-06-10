@@ -60,7 +60,7 @@ def find_offset(x0, x1):
     
     error, offset = sorted(errors)[0]
                      
-    return offset, error
+    return -offset, error
 
 
 # function to measure two waveforms with one offset by a certian amount
