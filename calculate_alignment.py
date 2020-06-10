@@ -13,39 +13,40 @@ from ibm_botocore.client import Config
 SAMPLE_RATE = 44100
 
 
-# function to process the signals and get something that 
+# function to process the signals and get something that
 # we can compare against each other.
 def process_signal(o):
     # normalise the values (zscore)
     o = (o - np.mean(o)) / np.std(o)
     # take any values > 2 standard deviations
     o = np.where(o > 2, 1.0, 0.0)
-    
+
     # add an 'decay' to the values such that we can do a more 'fuzzy' match
     # forward pass
     for i in range(1, len(o)):
         o[i] = max(o[i], o[i-1] * 0.9)
-        
+
     # backwards pass
     for i in range(len(o)-2, 0, -1):
         o[i] = max(o[i], o[i+1] * 0.9)
-    
+
     return o
 
-# Find the offest with the lowest error       
+
+# Find the offest with the lowest error
 def find_offset(x0, x1):
     offsets = tuple(range(-100, 100))
-    errors = [ (measure_error(x0, x1, offset), offset) for offset in offsets ]
-    
+    errors = [(measure_error(x0, x1, offset), offset) for offset in offsets]
+
     error, offset = sorted(errors)[0]
-                     
+
     return -offset, error
 
 
 # function to measure two waveforms with one offset by a certian amount
 def measure_error(x0, x1, offset):
     max_len = min(len(x0), len(x1))
-    
+
     # calculate the mean squared error of the two signals
     diff = x0[:max_len] - np.roll(x1[:max_len], offset)
     err = np.sum(diff**2) / len(diff)
@@ -66,11 +67,11 @@ def main(args):
     def load_from_cos(key):
         # Create a temp dir for our files to use
         with tempfile.TemporaryDirectory() as tmpdir:
-    
+
             cos_object = cos.get_object(
                 Bucket=bucket,
                 Key=key)
-            
+
             # write out files to temp dir
             file_path = Path(tmpdir, key)
             with open(file_path, "wb") as fp:
@@ -78,7 +79,10 @@ def main(args):
 
             # load the audio from out temp file
             return librosa.load(file_path,
-                                sr=SAMPLE_RATE, mono=True, offset=5, duration=20)
+                                sr=SAMPLE_RATE,
+                                mono=True,
+                                offset=5,
+                                duration=20)
 
     # load in the leader
     x0, fs0 = load_from_cos(reference_id)
@@ -86,7 +90,8 @@ def main(args):
     # load in sarah
     x1, fs1 = load_from_cos(part_id)
 
-    # Normalise the two signals so that they are the same average amplitude (volume)
+    # Normalise the two signals so that they are the same average
+    # amplitude (volume)
     x0 = (x0 - np.mean(x0)) / np.std(x0)
     x1 = (x1 - np.mean(x1)) / np.std(x1)
 
