@@ -23,17 +23,17 @@ def main(args):
 
     src_bucket = args.get('src_bucket')
     dst_bucket = args.get('dst_bucket')
-    part_id = args['part']
+    key = args['key']
 
     # Create a temp dir for our files to use
     with tempfile.TemporaryDirectory() as tmpdir:
 
         # download file to temp dir
-        file_path = Path(tmpdir, part_id)
+        file_path = Path(tmpdir, key)
         new_path = file_path.with_name("converted-" + file_path.name)
         new_path = new_path.with_suffix(".mp4")
 
-        cos.download_file(src_bucket, part_id, str(file_path))
+        cos.download_file(src_bucket, key, str(file_path))
 
         stream = ffmpeg.input(str(file_path))
         audio = stream.audio.filter('aresample', 44100)
@@ -45,7 +45,7 @@ def main(args):
 
         return {"src_bucket": src_bucket,
                 "dst_bucket": dst_bucket,
-                "src_key": part_id,
+                "src_key": key,
                 "dst_key": str(new_path.name)}
 
 
