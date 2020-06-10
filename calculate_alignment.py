@@ -7,31 +7,10 @@ import tempfile
 from pathlib import Path
 
 import ibm_boto3
-from ibm_botocore.client import Config, ClientError
+from ibm_botocore.client import Config
 
 
 SAMPLE_RATE = 44100
-
-
-def getParamsCOS(args):
-    endpoint = args.get('endpoint','https://s3.us.cloud-object-storage.appdomain.cloud')
-    if not (endpoint.startswith("https://") or endpoint.startswith("http://")) : endpoint = "https://" + endpoint
-    api_key_id = args.get('apikey', args.get('apiKeyId', args.get('__bx_creds', {}).get('cloud-object-storage', {}).get('apikey', os.environ.get('__OW_IAM_NAMESPACE_API_KEY') or ''))) 
-    service_instance_id = args.get('resource_instance_id', args.get('serviceInstanceId', args.get('__bx_creds', {}).get('cloud-object-storage', {}).get('resource_instance_id', '')))
-    ibm_auth_endpoint = args.get('ibmAuthEndpoint', 'https://iam.cloud.ibm.com/identity/token')
-    params = {}
-    params['bucket'] = args.get('bucket')
-    params['endpoint'] = endpoint
-    if not api_key_id:
-        return {'cos': None, 'params':params}
-    cos = ibm_boto3.client('s3',
-                           ibm_api_key_id=api_key_id,
-                           ibm_service_instance_id=service_instance_id,
-                           ibm_auth_endpoint=ibm_auth_endpoint,
-                           config=Config(signature_version='oauth'),
-                           endpoint_url=endpoint)
-    return {'cos':cos, 'params':params}
-
 
 
 # function to process the signals and get something that 
@@ -72,23 +51,17 @@ def measure_error(x0, x1, offset):
     err = np.sum(diff**2) / len(diff)
     return err
 
-def main(params):
 
-    resultsGetParams = getParamsCOS(params)
-    
-    cos = resultsGetParams.get('cos')
-    cos_params = resultsGetParams.get('params')
-    bucket = cos_params.get('bucket')
+def main(args):
 
-    try:
-        if not bucket or not cos:
-            raise ValueError(f"bucket name, key, and apikey are required for this operation. bucket: {bucket} cos: {cos}")
-    except ValueError as e:
-        print(e)
-        raise
+    cos = createCOSClient(args)
+    bucket = args.get('bucket')
 
-    reference_id = params['reference']
-    part_id = params['part']
+    if not cos:
+        raise ValueError(f"could not create COS instance")
+
+    reference_id = args['reference']
+    part_id = args['part']
 
     def load_from_cos(key):
         # Create a temp dir for our files to use
@@ -128,7 +101,71 @@ def main(params):
     # Actually calculate the offset
     offset, error = find_offset(s0, s1)
 
-    return {"reference": params["reference"],
-            "part": params["part"],
+    return {"reference": args["reference"],
+            "part": args["part"],
             "offset": ((offset * 512) / SAMPLE_RATE) * 1000,
             "err": error}
+
+
+def createCOSClient(args):
+    """
+    Create a ibm_boto3.client using the connectivity information
+    contained in args.
+
+    :param args: action parameters
+    :type args: dict
+    :return: An ibm_boto3.client
+    :rtype: ibm_boto3.client
+    """
+
+    # if a Cloud Object Storage endpoint parameter was specified
+    # make sure the URL contains the https:// scheme or the COS
+    # client cannot connect
+    if args.get('endpoint') and not args['endpoint'].startswith('https://'):
+        args['endpoint'] = 'https://{}'.format(args['endpoint'])
+
+    # set the Cloud Object Storage endpoint
+    endpoint = args.get('endpoint',
+                        'https://s3.us.cloud-object-storage.appdomain.cloud')
+
+    # extract Cloud Object Storage service credentials
+    cos_creds = args.get('__bx_creds', {}).get('cloud-object-storage', {})
+
+    # set Cloud Object Storage API key
+    api_key_id = \
+        args.get('apikey',
+                 args.get('apiKeyId',
+                          cos_creds.get('apikey',
+                                        os.environ
+                                        .get('__OW_IAM_NAMESPACE_API_KEY')
+                                        or '')))
+
+    if not api_key_id:
+        # fatal error; it appears that no Cloud Object Storage instance
+        # was bound to the action's package
+        return None
+
+    # set Cloud Object Storage instance id
+    svc_instance_id = args.get('resource_instance_id',
+                               args.get('serviceInstanceId',
+                                        cos_creds.get('resource_instance_id',
+                                                      '')))
+    if not svc_instance_id:
+        # fatal error; it appears that no Cloud Object Storage instance
+        # was bound to the action's package
+        return None
+
+    ibm_auth_endpoint = args.get('ibmAuthEndpoint',
+                                 'https://iam.cloud.ibm.com/identity/token')
+
+    # Create a Cloud Object Storage client using the provided
+    # connectivity information
+    cos = ibm_boto3.client('s3',
+                           ibm_api_key_id=api_key_id,
+                           ibm_service_instance_id=svc_instance_id,
+                           ibm_auth_endpoint=ibm_auth_endpoint,
+                           config=Config(signature_version='oauth'),
+                           endpoint_url=endpoint)
+
+    # Return Cloud Object Storage client
+    return cos
