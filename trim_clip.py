@@ -22,7 +22,7 @@ def main(args):
     src_bucket = args.get('src_bucket')
     dst_bucket = args.get('dst_bucket')
     offset = float(args.get('offset')) / 1000
-    key = args['key']
+    key = args.get('part_key')
 
     # Create a temp dir for our files to use
     with tempfile.TemporaryDirectory() as tmpdir:
