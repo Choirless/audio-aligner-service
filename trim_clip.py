@@ -43,10 +43,12 @@ def main(args):
 
         cos.upload_file(str(new_path), dst_bucket, str(new_path.name))
 
-        return {"src_bucket": src_bucket,
-                "dst_bucket": dst_bucket,
-                "src_key": key,
-                "dst_key": str(new_path.name)}
+        args["src_bucket"] = src_bucket
+        args["dst_bucket"] = dst_bucket
+        args["src_key"] = key
+        args["dst_key"] = str(new_path.name)
+
+        return args
 
 
 def createCOSClient(args):
