@@ -91,15 +91,8 @@ def manual_main(args):
     def load_from_cos(key):
         # Create a temp dir for our files to use
         with tempfile.TemporaryDirectory() as tmpdir:
-
-            cos_object = cos.get_object(
-                Bucket=bucket,
-                Key=key)
-
-            # write out files to temp dir
             file_path = Path(tmpdir, key)
-            with open(file_path, "wb") as fp:
-                fp.write(cos_object['Body'].read())
+            cos.download_file(bucket, key, str(file_path))
 
             # load the audio from out temp file
             return librosa.load(file_path,
