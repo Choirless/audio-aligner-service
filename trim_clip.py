@@ -33,10 +33,13 @@ def main(args):
         new_path = new_path.with_suffix(".mp4")
         cos.download_file(src_bucket, key, str(file_path))
 
-        stream = ffmpeg.input(str(file_path))
-        stream = ffmpeg.trim(stream, start=offset).setpts('PTS-STARTPTS')
-        out = ffmpeg.output(stream, str(new_path))
-        stdout, stderr = out.run()
+        if offset:
+            stream = ffmpeg.input(str(file_path))
+            stream = ffmpeg.trim(stream, start=offset).setpts('PTS-STARTPTS')
+            out = ffmpeg.output(stream, str(new_path))
+            stdout, stderr = out.run()
+        else:
+            new_path = file_path
 
         cos.upload_file(str(new_path), dst_bucket, str(new_path.name))
 
