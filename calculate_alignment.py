@@ -85,8 +85,8 @@ def manual_main(args):
     if not cos:
         raise ValueError(f"could not create COS instance")
 
-    reference_id = args['reference']
-    part_id = args['part']
+    reference_key = args['reference_key']
+    part_key = args['part_key']
 
     def load_from_cos(key):
         # Create a temp dir for our files to use
@@ -109,10 +109,10 @@ def manual_main(args):
                                 duration=20)
 
     # load in the leader
-    x0, fs0 = load_from_cos(reference_id)
+    x0, fs0 = load_from_cos(reference_key)
 
     # load in sarah
-    x1, fs1 = load_from_cos(part_id)
+    x1, fs1 = load_from_cos(part_key)
 
     # Normalise the two signals so that they are the same average
     # amplitude (volume)
