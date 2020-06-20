@@ -3,6 +3,7 @@ import json
 import os
 import librosa
 import numpy as np
+import re
 import tempfile
 from pathlib import Path
 
@@ -11,7 +12,6 @@ from ibm_botocore.client import Config
 
 
 SAMPLE_RATE = 44100
-
 
 # function to process the signals and get something that
 # we can compare against each other.
@@ -54,6 +54,30 @@ def measure_error(x0, x1, offset):
 
 
 def main(args):
+    cos = createCOSClient(args)
+    bucket = args.get('bucket')
+
+    if not cos:
+        raise ValueError("could not create COS instance")
+
+    key = args['key']
+    mo = re.match(r'^(converted)\+(.*?)\+(.*?)\.(.*?)$', key)
+    if not mo:
+        raise ValueError(f"Could not parse key: {key}")
+
+    stage, choir_id, part_key, ext = mo.groups()
+
+    args['part_key'] = f"{stage}+{choir_id}+{part_key}.{ext}"
+    args['reference_key'] = f"{stage}+{choir_id}+reference.{ext}"
+
+    if part_key == 'reference':
+        args["offset"] = 0
+        args["err"] = 0
+        return args
+
+    return manual_main(args)
+
+def manual_main(args):
 
     cos = createCOSClient(args)
     bucket = args.get('bucket')
