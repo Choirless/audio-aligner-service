@@ -123,11 +123,10 @@ def manual_main(args):
     # Actually calculate the offset
     offset, error = find_offset(s0, s1)
 
-    return {"reference": args["reference"],
-            "part": args["part"],
-            "offset": ((offset * 512) / SAMPLE_RATE) * 1000,
-            "err": error}
+    args["offset"] = ((offset * 512) / SAMPLE_RATE) * 1000
+    args["err"] = error
 
+    return args
 
 def createCOSClient(args):
     """
