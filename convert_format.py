@@ -30,7 +30,7 @@ def main(args):
 
         # download file to temp dir
         file_path = Path(tmpdir, key)
-        new_path = file_path.with_name("converted-" + file_path.name)
+        new_path = file_path.with_name("converted+" + file_path.name)
         new_path = new_path.with_suffix(".mp4")
 
         cos.download_file(src_bucket, key, str(file_path))
