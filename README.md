@@ -1,19 +1,24 @@
 # Openwhisk cloud function for converting and aligning audio tracks
 
-## To create the audio aligner function
+## Deploy the package
+
+Make sure you are logged in to the IBM Cloud account (`ibmcloud login`)
+
+Check the contents of `Makefile` and ensure the namespace and buckets are correct.
+Make sure the COS buckets you want to use exist. By default:
+
+- RAW_BUCKET_NAME ?= choirless-videos-raw
+- CONVERTED_BUCKET_NAME ?= choirless-videos-converted
+- TRIMMED_BUCKET_NAME ?= choirless-videos-trimmed
+
+run:
 
 ```
-ic fn action create calculate_alignment calculate_alignment.py --docker hammertoe/librosa_ml:latest --param bucket <bucket> --param endpoint <endpoint> --param apikey <api key>
+make
 ```
 
-## To invoke the function
+This will create actions and triggers of the COS buckets.
 
-```
-matt@Matts-MBP audio-aligner-service % ic fn action invoke calculate_alignment -r -p reference leader.mp4 -p part sarah1.webm
-{
-    "err": 0.1325956771107738,
-    "offset": -290.24943310657596,
-    "part": "sarah1.webm",
-    "reference": "leader.mp4"
-}
-```
+
+
+
