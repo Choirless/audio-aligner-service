@@ -38,6 +38,7 @@ def main(args):
         stream = ffmpeg.input(str(file_path))
         audio = stream.audio.filter('aresample', 44100)
         video = stream.video.filter('fps', fps=25, round='up')
+        video = stream.video.filter('scale', 640, -1)
         out = ffmpeg.output(audio, video, str(new_path))
         stdout, stderr = out.run()
 
