@@ -61,14 +61,14 @@ def main(args):
         raise ValueError("could not create COS instance")
 
     key = args['key']
-    mo = re.match(r'^(converted)\+(.*?)\+(.*?)\.(.*?)$', key)
+    mo = re.match(r'^(.*?)\+(.*?)\+(converted)\.(.*?)$', key)
     if not mo:
         raise ValueError(f"Could not parse key: {key}")
 
-    stage, choir_id, part_key, ext = mo.groups()
+    choir_id, part_key, stage, ext = mo.groups()
 
-    args['part_key'] = f"{stage}+{choir_id}+{part_key}.{ext}"
-    args['reference_key'] = f"{stage}+{choir_id}+reference.{ext}"
+    args['part_key'] = f"{choir_id}+{part_key}+{stage}.{ext}"
+    args['reference_key'] = f"{choir_id}+reference+{stage}.{ext}"
 
     if part_key == 'reference':
         args["offset"] = 0
