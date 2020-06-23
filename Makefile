@@ -51,9 +51,15 @@ actions:
 	ibmcloud fn action update audio_alignment/trim_clip trim_clip.py --param src_bucket $(CONVERTED_BUCKET_NAME) --param dst_bucket $(TRIMMED_BUCKET_NAME)  \
 	 --docker hammertoe/librosa_ml:latest --timeout 600000 --memory 512
 
+	# Pass to sticher
+	ibmcloud fn action update audio_alignment/pass_to_sticher pass_to_sticher.py --param bucket $(TRIMMED_BUCKET_NAME) \
+	 --docker hammertoe/librosa_ml:latest --timeout 600000 --memory 512
+
+
 sequences:
-	# Calc alignment and Trim
+	# Calc alignment and Trim amd stitch
 	ibmcloud fn action update audio_alignment/calc_and_trim --sequence audio_alignment/calculate_alignment,audio_alignment/trim_clip
+	ibmcloud fn action update audio_alignment/stitch --sequence audio_alignment/pass_to_sticher,choirless/stitcher
 
 triggers:
 	# Upload to raw bucket
@@ -62,12 +68,18 @@ triggers:
 	# Upload to converted bucket
 	ibmcloud fn trigger create bucket_converted_upload_trigger --feed /whisk.system/cos/changes --param bucket $(CONVERTED_BUCKET_NAME) --param event_types write
 
+	# Upload to trummed bucket
+	ibmcloud fn trigger create bucket_trimmed_upload_trigger --feed /whisk.system/cos/changes --param bucket $(TRIMMED_BUCKET_NAME) --param event_types write
+
 rules:
 	# Upload to raw bucket
 	ibmcloud fn rule create bucket_raw_upload_rule bucket_raw_upload_trigger audio_alignment/convert_format
 
 	# Upload to converted bucket
 	ibmcloud fn rule create bucket_converted_upload_rule bucket_converted_upload_trigger audio_alignment/calc_and_trim
+
+	# Upload to trimmed bucket
+	ibmcloud fn rule create bucket_trimmed_upload_rule bucket_trimmed_upload_trigger audio_alignment/stitch
 
 list:
 	# Display entities in the current namespace
