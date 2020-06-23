@@ -35,8 +35,9 @@ def main(args):
 
         if offset:
             stream = ffmpeg.input(str(file_path))
-            stream = ffmpeg.trim(stream, start=offset).setpts('PTS-STARTPTS')
-            out = ffmpeg.output(stream, str(new_path))
+            audio = stream.filter_('atrim', start=offset).filter_('asetpts', 'PTS-STARTPTS')
+            video = stream.trim(start=offset).setpts('PTS-STARTPTS')
+            out = ffmpeg.output(audio, video, str(new_path))
             stdout, stderr = out.run()
         else:
             new_path = file_path
