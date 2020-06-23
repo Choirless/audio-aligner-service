@@ -46,9 +46,10 @@ def main(args):
 
         args["src_bucket"] = src_bucket
         args["dst_bucket"] = dst_bucket
+        args["bucket"] = dst_bucket
         args["src_key"] = key
         args["dst_key"] = str(new_path.name)
-        args["choir_id"] = choir_id
+        args["choir_key"] = choir_id
 
         return args
 
