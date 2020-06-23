@@ -29,7 +29,7 @@ def main(args):
 
         # download file to temp dir
         file_path = Path(tmpdir, key)
-        choir_id, part_id = file_path.stem.split('+')
+        choir_id, part_id, stage = file_path.stem.split('+')
         new_path = file_path.with_name(f'{file_path.stem}+trimmed.mp4')
         cos.download_file(src_bucket, key, str(file_path))
 
