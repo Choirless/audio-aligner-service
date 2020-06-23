@@ -1,3 +1,4 @@
+import hashlib
 import io
 import json
 import os
@@ -10,8 +11,15 @@ from ibm_botocore.client import Config
 
 
 def main(args):
-    cos = createCOSClient(args)
+
+    notification = args.get('notification', {})
+    trigger_key = notification.get('object_name', '')
+    # abort if triggered by final video to stop loop
+    if '+final.' in trigger_key:
+        return args
     
+    cos = createCOSClient(args)
+
     if not cos:
         raise ValueError("could not create COS instance")
 
@@ -27,6 +35,9 @@ def main(args):
     )
 
     files = [ x['Key'] for x in contents['Contents'] ]
+    files = [ x for x in files if '+final.' not in x ]
+    # stable random sort in order to create more pleasing output
+    files.sort(key=lambda x: hashlib.sha1(x.encode('utf-8')).hexdigest())
 
     if len(files) >= 3:
         args['COS_BUCKET'] = bucket
